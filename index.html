@@ -206,17 +206,23 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-2);
-    padding: 12px 14px;
+    padding: 12px 10px;
     text-align: left;
     border-bottom: 1px solid var(--border);
     background: var(--surface-3);
+    white-space: nowrap;
   }
   .result-table th:not(:first-child) { text-align: right; }
   .result-table td {
-    padding: 13px 14px;
+    padding: 13px 10px;
     border-bottom: 1px solid var(--border);
     font-size: 14px;
     vertical-align: middle;
+    white-space: nowrap;
+  }
+  .result-table td:first-child {
+    white-space: nowrap;
+    font-weight: 600;
   }
   .result-table tr:last-child td { border-bottom: none; }
   .result-table td:not(:first-child) {
