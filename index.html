@@ -151,7 +151,7 @@
   }
 
   .price-cell {
-    padding: 18px 14px;
+    padding: 16px 8px;
     text-align: center;
     border-right: 1px solid var(--border);
     position: relative;
@@ -159,24 +159,26 @@
   .price-cell:last-child { border-right: none; }
 
   .price-type {
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.06em;
     color: var(--text-2);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    white-space: nowrap;
   }
   .price-cell:nth-child(2) .price-type { color: var(--warn); }
   .price-cell:nth-child(3) .price-type { color: var(--accent); }
 
   .price-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1;
+    white-space: nowrap;
   }
   .price-value.retail { color: var(--text-2); }
   .price-value.member { color: var(--warn); }
-  .price-value.trade  { color: var(--accent); }
+  .price-value.trade  { color: var(--accent); font-size: 18px; }
 
   .trade-cell {
     background: rgba(0, 245, 196, 0.04);
