@@ -319,6 +319,20 @@ const resultArea   = document.getElementById('resultArea');
 // CSV 解析：一列 = 一機型，欄位 A~E
 // A: 機型, B: 原廠電池, C: 副廠電池, D: 原廠螢幕, E: 副廠螢幕
 // ─────────────────────────────────────────────
+// 標準化機型名稱：統一大小寫、修正常見空格問題
+function normalizeModel(name) {
+  return name
+    .trim()
+    // SE2 → SE 2, SE3 → SE 3, 16E → 16E (already ok)
+    .replace(/SE(\d)/i, 'SE $1')
+    // mini/Mini → mini
+    .replace(/\bMini\b/, 'mini')
+    // max/MAX → Max
+    .replace(/\b(max|MAX)\b/, 'Max')
+    // 多餘空格壓縮
+    .replace(/\s+/g, ' ');
+}
+
 function parseCSV(text) {
   const lines = text.trim().split('\n').slice(1); // 跳過標頭
   const items = [];
@@ -326,11 +340,14 @@ function parseCSV(text) {
 
   lines.forEach(line => {
     const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-    const model = cols[0];
+    const model = normalizeModel(cols[0]);
     if (!model) return;
 
     COLS.forEach((repair, i) => {
-      const retail = parseInt(cols[i + 1]);
+      const val = cols[i + 1];
+      // X 或空值代表不提供此項目，跳過
+      if (!val || val.toUpperCase() === 'X') return;
+      const retail = parseInt(val);
       if (!retail || isNaN(retail)) return;
       const d = DISCOUNT[repair];
       items.push({
