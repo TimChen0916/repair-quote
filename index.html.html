@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>同行報價系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" defer></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@600;700&display=swap');
+
+  :root {
+    --accent: #00f5c4;
+    --accent-dim: #00c49a;
+    --warn: #ff8c42;
+    --surface: #111318;
+    --surface-2: #1a1d25;
+    --surface-3: #222630;
+    --border: #2e3340;
+    --text-1: #e8eaf0;
+    --text-2: #8890a4;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--surface);
+    color: var(--text-1);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Header */
+  .header-bar {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Select styling */
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    pointer-events: none;
+    font-size: 14px;
+  }
+  select {
+    width: 100%;
+    appearance: none;
+    background: var(--surface-3);
+    border: 1.5px solid var(--border);
+    color: var(--text-1);
+    border-radius: 10px;
+    padding: 14px 44px 14px 16px;
+    font-size: 15px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 245, 196, 0.12);
+  }
+  select option {
+    background: var(--surface-3);
+    color: var(--text-1);
+  }
+
+  /* Label */
+  .field-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    margin-bottom: 6px;
+  }
+
+  /* Result card */
+  .result-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    background: var(--surface-3);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .repair-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+
+  .model-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 9px;
+    background: rgba(0,245,196,0.1);
+    color: var(--accent);
+    border-radius: 20px;
+    border: 1px solid rgba(0,245,196,0.25);
+  }
+
+  /* Price grid */
+  .price-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .price-cell {
+    padding: 18px 14px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .price-cell:last-child { border-right: none; }
+
+  .price-type {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    margin-bottom: 8px;
+  }
+  .price-cell:nth-child(2) .price-type { color: var(--warn); }
+  .price-cell:nth-child(3) .price-type { color: var(--accent); }
+
+  .price-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .price-value.retail { color: var(--text-2); font-size: 20px; }
+  .price-value.member { color: var(--warn); font-size: 22px; }
+  .price-value.trade  { color: var(--accent); font-size: 26px; }
+
+  .trade-cell {
+    background: rgba(0, 245, 196, 0.04);
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-2);
+  }
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+
+  /* Multi-result table */
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    animation: slideUp 0.25s ease;
+  }
+  .result-table th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-3);
+  }
+  .result-table th:not(:first-child) { text-align: right; }
+  .result-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  .result-table tr:last-child td { border-bottom: none; }
+  .result-table td:not(:first-child) {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+  .result-table td.col-retail { color: var(--text-2); font-size: 13px; }
+  .result-table td.col-member { color: var(--warn); }
+  .result-table td.col-trade  { color: var(--accent); font-size: 15px; }
+  .result-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    padding: 0 4px;
+  }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header-bar">
+  <div class="header-dot"></div>
+  <span style="font-size:14px;font-weight:700;letter-spacing:0.04em;">同行報價系統</span>
+  <span style="margin-left:auto;font-size:11px;color:var(--text-2);">僅供業者查詢</span>
+</div>
+
+<!-- Main -->
+<div style="max-width:540px;margin:0 auto;padding:20px 16px 40px;">
+
+  <!-- Selectors -->
+  <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px;">
+
+    <div>
+      <div class="field-label">機型選擇</div>
+      <div class="select-wrap">
+        <select id="modelSelect" onchange="onSelectionChange()">
+          <option value="">── 請選擇機型 ──</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <div class="field-label">維修項目</div>
+      <div class="select-wrap">
+        <select id="repairSelect" onchange="onSelectionChange()">
+          <option value="">── 請先選擇機型 ──</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider" style="margin-bottom:24px;">
+
+  <!-- Results -->
+  <div id="resultArea">
+    <div class="empty-state">
+      <div class="empty-icon">🔧</div>
+      <div style="font-size:14px;font-weight:500;">請選擇機型與維修項目</div>
+      <div style="font-size:12px;margin-top:6px;">將顯示詳細報價資訊</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// 📦 資料庫（後續可替換成 Google 試算表 API）
+// ─────────────────────────────────────────────
+const PRICES = [
+  // iPhone 16 系列
+  { model: "iPhone 16",        repair: "面板總成更換",   retail: 3200, member: 2600, trade: 2200 },
+  { model: "iPhone 16",        repair: "電池更換",        retail: 1200, member: 900,  trade: 750  },
+  { model: "iPhone 16",        repair: "尾插更換",        retail: 1500, member: 1200, trade: 980  },
+  { model: "iPhone 16",        repair: "後鏡頭玻璃",     retail: 1800, member: 1400, trade: 1100 },
+  { model: "iPhone 16 Plus",   repair: "面板總成更換",   retail: 3500, member: 2800, trade: 2400 },
+  { model: "iPhone 16 Plus",   repair: "電池更換",        retail: 1200, member: 900,  trade: 750  },
+  { model: "iPhone 16 Plus",   repair: "尾插更換",        retail: 1500, member: 1200, trade: 980  },
+  { model: "iPhone 16 Pro",    repair: "面板總成更換",   retail: 5500, member: 4500, trade: 3800 },
+  { model: "iPhone 16 Pro",    repair: "電池更換",        retail: 1400, member: 1100, trade: 920  },
+  { model: "iPhone 16 Pro",    repair: "後鏡頭模組",     retail: 6500, member: 5200, trade: 4400 },
+  { model: "iPhone 16 Pro Max","repair": "面板總成更換",  retail: 6500, member: 5200, trade: 4400 },
+  { model: "iPhone 16 Pro Max","repair": "電池更換",       retail: 1400, member: 1100, trade: 920  },
+  { model: "iPhone 16 Pro Max","repair": "後鏡頭模組",    retail: 7200, member: 5800, trade: 4900 },
+
+  // iPhone 15 系列
+  { model: "iPhone 15",        repair: "面板總成更換",   retail: 2800, member: 2200, trade: 1850 },
+  { model: "iPhone 15",        repair: "電池更換",        retail: 1100, member: 850,  trade: 680  },
+  { model: "iPhone 15",        repair: "尾插更換",        retail: 1400, member: 1100, trade: 880  },
+  { model: "iPhone 15 Plus",   repair: "面板總成更換",   retail: 3200, member: 2500, trade: 2100 },
+  { model: "iPhone 15 Plus",   repair: "電池更換",        retail: 1100, member: 850,  trade: 680  },
+  { model: "iPhone 15 Pro",    repair: "面板總成更換",   retail: 4800, member: 3900, trade: 3200 },
+  { model: "iPhone 15 Pro",    repair: "電池更換",        retail: 1300, member: 1000, trade: 820  },
+  { model: "iPhone 15 Pro Max","repair": "面板總成更換",  retail: 5800, member: 4600, trade: 3900 },
+  { model: "iPhone 15 Pro Max","repair": "電池更換",       retail: 1300, member: 1000, trade: 820  },
+
+  // Samsung
+  { model: "Samsung S25 Ultra","repair": "面板總成更換",  retail: 7800, member: 6200, trade: 5200 },
+  { model: "Samsung S25 Ultra","repair": "電池更換",       retail: 1600, member: 1300, trade: 1050 },
+  { model: "Samsung S25 Ultra","repair": "後鏡頭模組",    retail: 6500, member: 5200, trade: 4300 },
+  { model: "Samsung S25",      repair: "面板總成更換",   retail: 5500, member: 4400, trade: 3600 },
+  { model: "Samsung S25",      repair: "電池更換",        retail: 1400, member: 1100, trade: 900  },
+  { model: "Samsung A55",      repair: "面板總成更換",   retail: 2200, member: 1800, trade: 1450 },
+  { model: "Samsung A55",      repair: "電池更換",        retail: 900,  member: 720,  trade: 580  },
+
+  // iPad
+  { model: "iPad Air M2",      repair: "面板總成更換",   retail: 4500, member: 3600, trade: 3000 },
+  { model: "iPad Air M2",      repair: "電池更換",        retail: 2200, member: 1800, trade: 1500 },
+  { model: "iPad Pro M4 11\"", repair: "面板總成更換",   retail: 7500, member: 6000, trade: 5000 },
+  { model: "iPad Pro M4 11\"", repair: "電池更換",        retail: 2500, member: 2000, trade: 1680 },
+];
+
+// ─────────────────────────────────────────────
+// 初始化選單
+// ─────────────────────────────────────────────
+const modelSelect  = document.getElementById('modelSelect');
+const repairSelect = document.getElementById('repairSelect');
+const resultArea   = document.getElementById('resultArea');
+
+function getModels() {
+  return [...new Set(PRICES.map(p => p.model))];
+}
+
+function getRepairs(model) {
+  if (!model) return [];
+  return [...new Set(PRICES.filter(p => p.model === model).map(p => p.repair))];
+}
+
+function populateModels() {
+  getModels().forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    modelSelect.appendChild(opt);
+  });
+}
+
+function populateRepairs(model) {
+  repairSelect.innerHTML = '';
+  const repairs = getRepairs(model);
+  if (!repairs.length) {
+    repairSelect.innerHTML = '<option value="">── 請先選擇機型 ──</option>';
+    return;
+  }
+  const placeholder = document.createElement('option');
+  placeholder.value = ''; placeholder.textContent = '── 所有維修項目 ──';
+  repairSelect.appendChild(placeholder);
+
+  const allOpt = document.createElement('option');
+  allOpt.value = '__all__'; allOpt.textContent = '📋 全部項目一覽';
+  repairSelect.appendChild(allOpt);
+
+  repairs.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r; opt.textContent = r;
+    repairSelect.appendChild(opt);
+  });
+}
+
+// ─────────────────────────────────────────────
+// 渲染結果
+// ─────────────────────────────────────────────
+function fmt(n) {
+  return 'NT$ ' + n.toLocaleString('zh-TW');
+}
+
+function renderSingle(item) {
+  return `
+  <div style="margin-bottom:8px;">
+    <span class="section-title">查詢結果</span>
+  </div>
+  <div class="result-card">
+    <div class="card-header">
+      <span class="repair-name">${item.repair}</span>
+      <span class="model-badge">${item.model}</span>
+    </div>
+    <div class="price-grid">
+      <div class="price-cell">
+        <div class="price-type">原 價</div>
+        <div class="price-value retail">${fmt(item.retail)}</div>
+      </div>
+      <div class="price-cell">
+        <div class="price-type">會員價</div>
+        <div class="price-value member">${fmt(item.member)}</div>
+      </div>
+      <div class="price-cell trade-cell">
+        <div class="price-type" style="color:var(--accent);">同行價</div>
+        <div class="price-value trade">${fmt(item.trade)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAll(model, items) {
+  const rows = items.map(item => `
+    <tr>
+      <td style="font-weight:500;color:var(--text-1);">${item.repair}</td>
+      <td class="col-retail">${fmt(item.retail)}</td>
+      <td class="col-member">${fmt(item.member)}</td>
+      <td class="col-trade">${fmt(item.trade)}</td>
+    </tr>`).join('');
+
+  return `
+  <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+    <span class="section-title">全部項目</span>
+    <span class="model-badge" style="font-size:11px;">${model} · ${items.length} 項</span>
+  </div>
+  <div class="result-card" style="overflow-x:auto;">
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th>維修項目</th>
+          <th>原價</th>
+          <th>會員</th>
+          <th style="color:var(--accent);">同行</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function showEmpty() {
+  resultArea.innerHTML = `
+  <div class="empty-state">
+    <div class="empty-icon">🔧</div>
+    <div style="font-size:14px;font-weight:500;">請選擇機型與維修項目</div>
+    <div style="font-size:12px;margin-top:6px;">將顯示詳細報價資訊</div>
+  </div>`;
+}
+
+function onSelectionChange() {
+  const model  = modelSelect.value;
+  const repair = repairSelect.value;
+
+  // 機型切換 → 重整維修項目
+  if (document.activeElement === modelSelect) {
+    populateRepairs(model);
+    showEmpty();
+    return;
+  }
+
+  if (!model || !repair) { showEmpty(); return; }
+
+  if (repair === '__all__') {
+    const items = PRICES.filter(p => p.model === model);
+    resultArea.innerHTML = renderAll(model, items);
+    return;
+  }
+
+  const item = PRICES.find(p => p.model === model && p.repair === repair);
+  if (item) {
+    resultArea.innerHTML = renderSingle(item);
+  } else {
+    showEmpty();
+  }
+}
+
+// 機型選單也要觸發維修更新
+modelSelect.addEventListener('change', () => {
+  populateRepairs(modelSelect.value);
+  showEmpty();
+});
+
+populateModels();
+</script>
+</body>
+</html>
