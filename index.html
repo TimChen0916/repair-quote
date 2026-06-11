@@ -159,10 +159,9 @@
   .price-cell:last-child { border-right: none; }
 
   .price-type {
-    font-size: 10px;
+    font-size: 20px;
     font-weight: 700;
     letter-spacing: 0.1em;
-    text-transform: uppercase;
     color: var(--text-2);
     margin-bottom: 8px;
   }
@@ -175,9 +174,9 @@
     font-weight: 700;
     line-height: 1;
   }
-  .price-value.retail { color: var(--text-2); font-size: 20px; }
-  .price-value.member { color: var(--warn); font-size: 22px; }
-  .price-value.trade  { color: var(--accent); font-size: 26px; }
+  .price-value.retail { color: var(--text-2); }
+  .price-value.member { color: var(--warn); }
+  .price-value.trade  { color: var(--accent); }
 
   .trade-cell {
     background: rgba(0, 245, 196, 0.04);
@@ -293,69 +292,150 @@
 
 <script>
 // ─────────────────────────────────────────────
-// 📦 資料庫（後續可替換成 Google 試算表 API）
+// 折數對照表（原價 × 折數 = 顯示價格）
 // ─────────────────────────────────────────────
-const PRICES = [
-  // iPhone 16 系列
-  { model: "iPhone 16",        repair: "面板總成更換",   retail: 3200, member: 2600, trade: 2200 },
-  { model: "iPhone 16",        repair: "電池更換",        retail: 1200, member: 900,  trade: 750  },
-  { model: "iPhone 16",        repair: "尾插更換",        retail: 1500, member: 1200, trade: 980  },
-  { model: "iPhone 16",        repair: "後鏡頭玻璃",     retail: 1800, member: 1400, trade: 1100 },
-  { model: "iPhone 16 Plus",   repair: "面板總成更換",   retail: 3500, member: 2800, trade: 2400 },
-  { model: "iPhone 16 Plus",   repair: "電池更換",        retail: 1200, member: 900,  trade: 750  },
-  { model: "iPhone 16 Plus",   repair: "尾插更換",        retail: 1500, member: 1200, trade: 980  },
-  { model: "iPhone 16 Pro",    repair: "面板總成更換",   retail: 5500, member: 4500, trade: 3800 },
-  { model: "iPhone 16 Pro",    repair: "電池更換",        retail: 1400, member: 1100, trade: 920  },
-  { model: "iPhone 16 Pro",    repair: "後鏡頭模組",     retail: 6500, member: 5200, trade: 4400 },
-  { model: "iPhone 16 Pro Max","repair": "面板總成更換",  retail: 6500, member: 5200, trade: 4400 },
-  { model: "iPhone 16 Pro Max","repair": "電池更換",       retail: 1400, member: 1100, trade: 920  },
-  { model: "iPhone 16 Pro Max","repair": "後鏡頭模組",    retail: 7200, member: 5800, trade: 4900 },
-
-  // iPhone 15 系列
-  { model: "iPhone 15",        repair: "面板總成更換",   retail: 2800, member: 2200, trade: 1850 },
-  { model: "iPhone 15",        repair: "電池更換",        retail: 1100, member: 850,  trade: 680  },
-  { model: "iPhone 15",        repair: "尾插更換",        retail: 1400, member: 1100, trade: 880  },
-  { model: "iPhone 15 Plus",   repair: "面板總成更換",   retail: 3200, member: 2500, trade: 2100 },
-  { model: "iPhone 15 Plus",   repair: "電池更換",        retail: 1100, member: 850,  trade: 680  },
-  { model: "iPhone 15 Pro",    repair: "面板總成更換",   retail: 4800, member: 3900, trade: 3200 },
-  { model: "iPhone 15 Pro",    repair: "電池更換",        retail: 1300, member: 1000, trade: 820  },
-  { model: "iPhone 15 Pro Max","repair": "面板總成更換",  retail: 5800, member: 4600, trade: 3900 },
-  { model: "iPhone 15 Pro Max","repair": "電池更換",       retail: 1300, member: 1000, trade: 820  },
-
-  // Samsung
-  { model: "Samsung S25 Ultra","repair": "面板總成更換",  retail: 7800, member: 6200, trade: 5200 },
-  { model: "Samsung S25 Ultra","repair": "電池更換",       retail: 1600, member: 1300, trade: 1050 },
-  { model: "Samsung S25 Ultra","repair": "後鏡頭模組",    retail: 6500, member: 5200, trade: 4300 },
-  { model: "Samsung S25",      repair: "面板總成更換",   retail: 5500, member: 4400, trade: 3600 },
-  { model: "Samsung S25",      repair: "電池更換",        retail: 1400, member: 1100, trade: 900  },
-  { model: "Samsung A55",      repair: "面板總成更換",   retail: 2200, member: 1800, trade: 1450 },
-  { model: "Samsung A55",      repair: "電池更換",        retail: 900,  member: 720,  trade: 580  },
-
-  // iPad
-  { model: "iPad Air M2",      repair: "面板總成更換",   retail: 4500, member: 3600, trade: 3000 },
-  { model: "iPad Air M2",      repair: "電池更換",        retail: 2200, member: 1800, trade: 1500 },
-  { model: "iPad Pro M4 11\"", repair: "面板總成更換",   retail: 7500, member: 6000, trade: 5000 },
-  { model: "iPad Pro M4 11\"", repair: "電池更換",        retail: 2500, member: 2000, trade: 1680 },
-];
+const DISCOUNT = {
+  "原廠電池": { member: 0.95, trade: 0.83 },
+  "副廠電池": { member: 0.90, trade: 0.65 },
+  "原廠螢幕": { member: 0.95, trade: 0.86 },
+  "副廠螢幕": { member: 0.95, trade: 0.85 },
+};
 
 // ─────────────────────────────────────────────
-// 初始化選單
+// Google 試算表 CSV 網址
 // ─────────────────────────────────────────────
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUwnELEbySqOaS4nV5SV40XyoETKBVSCpaU99IS3r0e2WP4DjCPfDcKmD9TTSsoayahipk1hL9Fc2G/pub?gid=0&single=true&output=csv";
+
+// ─────────────────────────────────────────────
+// 全域資料
+// ─────────────────────────────────────────────
+let PRICES = [];
+
 const modelSelect  = document.getElementById('modelSelect');
 const repairSelect = document.getElementById('repairSelect');
 const resultArea   = document.getElementById('resultArea');
 
-function getModels() {
-  return [...new Set(PRICES.map(p => p.model))];
+// ─────────────────────────────────────────────
+// CSV 解析：一列 = 一機型，欄位 A~E
+// A: 機型, B: 原廠電池, C: 副廠電池, D: 原廠螢幕, E: 副廠螢幕
+// ─────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n').slice(1); // 跳過標頭
+  const items = [];
+  const COLS = ['原廠電池', '副廠電池', '原廠螢幕', '副廠螢幕'];
+
+  lines.forEach(line => {
+    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const model = cols[0];
+    if (!model) return;
+
+    COLS.forEach((repair, i) => {
+      const retail = parseInt(cols[i + 1]);
+      if (!retail || isNaN(retail)) return;
+      const d = DISCOUNT[repair];
+      items.push({
+        model,
+        repair,
+        retail,
+        member: Math.round(retail * d.member),
+        trade:  Math.round(retail * d.trade),
+      });
+    });
+  });
+  return items;
 }
 
-function getRepairs(model) {
-  if (!model) return [];
-  return [...new Set(PRICES.filter(p => p.model === model).map(p => p.repair))];
+// ─────────────────────────────────────────────
+// 載入資料
+// ─────────────────────────────────────────────
+function showLoading() {
+  resultArea.innerHTML = `
+  <div class="empty-state">
+    <div class="empty-icon" style="font-size:28px;opacity:0.6;">⏳</div>
+    <div style="font-size:14px;font-weight:500;">載入報價資料中⋯</div>
+  </div>`;
 }
 
+function showError() {
+  resultArea.innerHTML = `
+  <div class="empty-state">
+    <div class="empty-icon" style="font-size:28px;opacity:0.6;">⚠️</div>
+    <div style="font-size:14px;font-weight:500;">資料載入失敗</div>
+    <div style="font-size:12px;margin-top:6px;">請確認試算表已公開發布</div>
+  </div>`;
+}
+
+// 備用假資料（本機測試 / CORS 被擋時使用）
+const FALLBACK_CSV = `機型,原廠電池,副廠電池,原廠螢幕,副廠螢幕
+iPhone 7,800,500,1800,900
+iPhone 7 Plus,900,550,2200,1100
+iPhone 8,850,520,2000,1000
+iPhone 8 Plus,950,600,2500,1300
+iPhone X,1000,650,3200,1600
+iPhone XS,1100,700,3800,1900
+iPhone XS Max,1200,750,4500,2200
+iPhone XR,1000,650,2800,1400
+iPhone 11,1100,700,3000,1500
+iPhone 11 Pro,1200,780,4200,2100
+iPhone 11 Pro Max,1300,820,5000,2500
+iPhone 12,1300,820,3500,1800
+iPhone 12 mini,1200,780,3200,1600
+iPhone 12 Pro,1400,880,4500,2200
+iPhone 12 Pro Max,1500,950,5500,2800
+iPhone 13,1400,880,3800,1900
+iPhone 13 mini,1300,820,3500,1800
+iPhone 13 Pro,1600,1000,5000,2500
+iPhone 13 Pro Max,1700,1050,6000,3000
+iPhone 14,1600,1000,4200,2100
+iPhone 14 Plus,1700,1050,5000,2500
+iPhone 14 Pro,1800,1150,6500,3200
+iPhone 14 Pro Max,1900,1200,7800,3900
+iPhone 15,1600,1100,4800,2800
+iPhone 15 Plus,1600,1100,5500,3200
+iPhone 15 Pro,1800,1300,7500,4800
+iPhone 15 Pro Max,1800,1300,8800,5800
+iPhone 16,1800,1200,5500,3200
+iPhone 16 Plus,1800,1200,6200,3500
+iPhone 16 Pro,2000,1400,8500,5500
+iPhone 16 Pro Max,2000,1400,9800,6500
+iPhone 17,2000,1300,6000,3500
+iPhone 17 Air,2000,1300,6800,4000
+iPhone 17 Pro,2200,1500,10000,6000
+iPhone 17 Pro Max,2200,1500,11500,7000
+iPhone SE 2,800,500,2000,1000
+iPhone SE 3,900,580,2200,1100
+iPhone 16E,1600,1050,4500,2600
+iPhone 17E,1800,1150,5000,2900`;
+
+async function loadData() {
+  showLoading();
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error('fetch failed');
+    const text = await res.text();
+    PRICES = parseCSV(text);
+    populateModels();
+    showEmpty();
+  } catch (e) {
+    console.warn('CSV fetch 失敗，使用備用資料:', e.message);
+    PRICES = parseCSV(FALLBACK_CSV);
+    populateModels();
+    showEmpty();
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:rgba(255,140,66,0.12);border:1px solid rgba(255,140,66,0.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#ff8c42;line-height:1.5;';
+    banner.innerHTML = '⚠️ 無法連線至試算表，目前顯示暫存資料。<br>請將此檔案放至伺服器後即可自動讀取最新報價。';
+    const resultArea = document.getElementById('resultArea');
+    resultArea.parentNode.insertBefore(banner, resultArea);
+  }
+}
+
+// ─────────────────────────────────────────────
+// 選單
+// ─────────────────────────────────────────────
 function populateModels() {
-  getModels().forEach(m => {
+  modelSelect.innerHTML = '<option value="">── 請選擇機型 ──</option>';
+  const models = [...new Set(PRICES.map(p => p.model))];
+  models.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m; opt.textContent = m;
     modelSelect.appendChild(opt);
@@ -364,28 +444,27 @@ function populateModels() {
 
 function populateRepairs(model) {
   repairSelect.innerHTML = '';
-  const repairs = getRepairs(model);
-  if (!repairs.length) {
+  if (!model) {
     repairSelect.innerHTML = '<option value="">── 請先選擇機型 ──</option>';
     return;
   }
-  const placeholder = document.createElement('option');
-  placeholder.value = ''; placeholder.textContent = '── 所有維修項目 ──';
-  repairSelect.appendChild(placeholder);
-
-  const allOpt = document.createElement('option');
-  allOpt.value = '__all__'; allOpt.textContent = '📋 全部項目一覽';
-  repairSelect.appendChild(allOpt);
-
-  repairs.forEach(r => {
+  const MENU = [
+    { value: '',        label: '── 請選擇維修項目 ──' },
+    { value: '__all__', label: '📋  全部項目一覽' },
+    { value: '原廠電池', label: '🔋  原廠電池' },
+    { value: '副廠電池', label: '🔋  副廠電池' },
+    { value: '原廠螢幕', label: '📱  原廠螢幕' },
+    { value: '副廠螢幕', label: '📱  副廠螢幕' },
+  ];
+  MENU.forEach(({ value, label }) => {
     const opt = document.createElement('option');
-    opt.value = r; opt.textContent = r;
+    opt.value = value; opt.textContent = label;
     repairSelect.appendChild(opt);
   });
 }
 
 // ─────────────────────────────────────────────
-// 渲染結果
+// 渲染
 // ─────────────────────────────────────────────
 function fmt(n) {
   return 'NT$ ' + n.toLocaleString('zh-TW');
@@ -460,7 +539,6 @@ function onSelectionChange() {
   const model  = modelSelect.value;
   const repair = repairSelect.value;
 
-  // 機型切換 → 重整維修項目
   if (document.activeElement === modelSelect) {
     populateRepairs(model);
     showEmpty();
@@ -483,13 +561,13 @@ function onSelectionChange() {
   }
 }
 
-// 機型選單也要觸發維修更新
 modelSelect.addEventListener('change', () => {
   populateRepairs(modelSelect.value);
   showEmpty();
 });
 
-populateModels();
+// 啟動：先載入資料
+loadData();
 </script>
 </body>
 </html>
