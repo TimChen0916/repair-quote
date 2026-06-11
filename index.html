@@ -203,10 +203,9 @@
   .result-table th {
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    letter-spacing: 0.06em;
     color: var(--text-2);
-    padding: 12px 10px;
+    padding: 10px 8px;
     text-align: left;
     border-bottom: 1px solid var(--border);
     background: var(--surface-3);
@@ -214,15 +213,16 @@
   }
   .result-table th:not(:first-child) { text-align: right; }
   .result-table td {
-    padding: 13px 10px;
+    padding: 12px 8px;
     border-bottom: 1px solid var(--border);
-    font-size: 14px;
+    font-size: 13px;
     vertical-align: middle;
     white-space: nowrap;
   }
   .result-table td:first-child {
     white-space: nowrap;
     font-weight: 600;
+    font-size: 14px;
   }
   .result-table tr:last-child td { border-bottom: none; }
   .result-table td:not(:first-child) {
@@ -230,9 +230,9 @@
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
   }
-  .result-table td.col-retail { color: var(--text-2); font-size: 13px; }
-  .result-table td.col-member { color: var(--warn); }
-  .result-table td.col-trade  { color: var(--accent); font-size: 15px; }
+  .result-table td.col-retail { color: var(--text-2); font-size: 12px; }
+  .result-table td.col-member { color: var(--warn); font-size: 13px; }
+  .result-table td.col-trade  { color: var(--accent); font-size: 14px; }
   .result-table tr:hover td { background: rgba(255,255,255,0.02); }
 
   .section-title {
@@ -490,7 +490,9 @@ function populateRepairs(model) {
 // 渲染
 // ─────────────────────────────────────────────
 function fmt(n) {
-  return 'NT$ ' + n.toLocaleString('zh-TW');
+  const isMobile = window.innerWidth < 480;
+  const prefix = isMobile ? '$ ' : 'NT$ ';
+  return prefix + n.toLocaleString('zh-TW');
 }
 
 function renderSingle(item) {
@@ -534,7 +536,7 @@ function renderAll(model, items) {
     <span class="section-title">全部項目</span>
     <span class="model-badge" style="font-size:11px;">${model} · ${items.length} 項</span>
   </div>
-  <div class="result-card" style="overflow-x:auto;">
+  <div class="result-card">
     <table class="result-table">
       <thead>
         <tr>
