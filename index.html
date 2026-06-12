@@ -561,6 +561,19 @@ function showEmpty() {
   </div>`;
 }
 
+function showUnavailable() {
+  resultArea.innerHTML = `
+  <div class="empty-state">
+    <div class="empty-icon">🛠️</div>
+    <div style="font-size:14px;font-weight:500;">目前沒有維修</div>
+    <div style="font-size:12px;margin-top:10px;line-height:1.8;">
+      可能的原因<br>
+      1. 太新還沒有報價<br>
+      2. 太舊沒有零件
+    </div>
+  </div>`;
+}
+
 function onSelectionChange() {
   const model  = modelSelect.value;
   const repair = repairSelect.value;
@@ -575,6 +588,10 @@ function onSelectionChange() {
 
   if (repair === '__all__') {
     const items = PRICES.filter(p => p.model === model);
+    if (!items.length) {
+      showUnavailable();
+      return;
+    }
     resultArea.innerHTML = renderAll(model, items);
     return;
   }
@@ -583,7 +600,7 @@ function onSelectionChange() {
   if (item) {
     resultArea.innerHTML = renderSingle(item);
   } else {
-    showEmpty();
+    showUnavailable();
   }
 }
 
